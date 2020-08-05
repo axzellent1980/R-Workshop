@@ -8,3 +8,47 @@ output: html_document
 # Plots with ggplot2
 
 Following along the R workshop, this part focusing on the creation of visualisations. It's going to be a fun evening!
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(here)
+```
+
+```{r}
+ca_np <- read_csv(here("data","ca_np.csv"))
+ci_np <- read_excel(here("data","ci_np.xlsx"))
+
+gg_base <- ggplot(data=ci_np, aes(x=year, y=visitors)) 
+gg_base + 
+  geom_line(
+    color = "purple",
+    linetype = "dashed"
+  )
+
+gg_base +
+  geom_point(
+    color = "skyblue",
+    aes(size = year),
+    alpha = 0.5
+  ) +
+  geom_line(color = "red") +
+  theme_classic() +
+  labs(
+    x="Year",
+    y="Visitors",
+    title="Channel Island NP Visitation",
+    subtitle = "(1963-2016)"
+  )
+
+gg_canp <- ggplot(data=ca_np, aes(x=year, y=visitors, group=park_name)) 
+
+gg_canp+
+  geom_line(show.legend = F) +
+  theme_light() +
+  labs(x="Year", y="Visitors p.a.") +
+  facet_wrap(~ park_name)
+
+ggsave(here("figures", "ca_np_visitors.jpg"), width = 8, height = 6, dpi = 180)
+```
+
