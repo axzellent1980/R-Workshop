@@ -1,0 +1,10 @@
+---
+title: "Creating graphs in R with 'ggplot2'"
+author: "Axel Waldecker"
+date: "5 August 2020"
+output: html_document
+---
+
+# Plots with ggplot2
+
+Following along the R workshop, this part focusing on the creation of visualisations. It's going to be a fun evening!
