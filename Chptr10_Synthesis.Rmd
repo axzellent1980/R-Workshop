@@ -1,0 +1,87 @@
+---
+title: "Workshop Final - Synthesis"
+author: "Axel Waldecker"
+date: "6 August 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(paletteer)
+library(here)
+library(janitor)
+library(kableExtra)
+```
+
+## Putting it all together
+```{r message=FALSE}
+us_landings <- read_csv(here("data","noaa_landings.csv"), na = "no data")
+```
+```{r}
+glimpse(us_landings)
+```
+
+Lot's to clean and wrangle before conducting the analysis...
+```{r}
+# snake_case the column titles first
+salmon <- us_landings %>% 
+  clean_names()
+
+# names(salmon)
+
+# Building further wrangling sequence to tackle the actual data
+salmon <- salmon %>% 
+  mutate(
+    state = str_to_lower(state),
+    afs_name = str_to_lower(afs_name),
+    dollars_usd = parse_number(dollars_usd)
+         ) %>% 
+  filter(str_detect(afs_name, pattern = "salmon")) %>% 
+  separate(afs_name,
+           into = c("group","subgroup"),
+           sep = ", ") %>% 
+  drop_na(dollars_usd)
+
+head(salmon,10)
+```
+
+The filtered `salmon` dataset contains `r nrow(salmon)` observations.
+
+There are `r length(unique(salmon$subgroup))` different salmon subgroups in the dataset, namely: `r unique(salmon$subgroup)`.
+
+## Analysing  annual total US landings and dollar value
+
+```{r}
+salmon_annual <- salmon %>% 
+  group_by(year, subgroup) %>% 
+  summarize(
+    tot_value = sum(dollars_usd, na.rm=T)
+  ) %>% 
+  drop_na(tot_value)
+
+kable(head(salmon_annual,10)) %>% 
+  kable_styling(
+    bootstrap_options = c("striped", "condensed"),
+    full_width = F,
+    position = "left"
+  )
+```
+
+```{r}
+salmon_gg <- ggplot(data = salmon_annual,
+                    aes(x=year, y=tot_value, group=subgroup))
+
+```
+
+```{r}
+salmon_gg +
+  geom_line(aes(color=subgroup)) +
+  theme_light() +
+  labs(title = "Same chart, cooler palette",
+       x="Year",
+       y="USD") +
+  scale_color_paletteer_d("ggthemes::Tableau_10")
+```
+
+
