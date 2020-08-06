@@ -1,0 +1,74 @@
+---
+title: "Workshop, Part 7 - Tidying"
+author: "Axel Waldecker"
+date: "6 August 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(readxl)
+library(here)
+library(kableExtra)
+```
+
+## Code-along
+
+```{r}
+inverts <- read_excel(here("data","inverts.xlsx"))
+head(inverts)
+```
+
+Converting 'inverts' to long-form table.
+```{r}
+inverts_long <- pivot_longer(inverts,
+                             cols = '2016':'2018',
+                             names_to = "year",
+                             values_to = "sp_count")
+
+inverts_long <- inverts_long %>% 
+  mutate(year = as.numeric(year))
+
+head(inverts_long)
+```
+
+Converting the long-form table back to better human-readable wide format.
+```{r}
+inverts_wide <- inverts_long %>% 
+  pivot_wider(names_from = "common_name",
+              values_from = "sp_count")
+
+head(inverts_wide)
+```
+
+Next: tidying up the column names of the wide format table we created.
+```{r}
+inverts_wide <- inverts_wide %>% 
+  janitor::clean_names()
+
+names(inverts_wide)
+```
+
+Uniting information from several columns into one.
+```{r}
+inverts_united <- inverts_long %>% 
+  unite(col = "month_year", # name for the united column
+        c(month, year), # columns to unite
+        sep = "/"
+  )
+
+head(inverts_united)
+```
+
+String replacement exercise, here: replace "california" with "CA" in the "common_name" column.
+```{r}
+ca_abbr <- inverts %>% 
+  mutate(
+    common_name = str_replace(
+      common_name,
+      pattern = "california", 
+      replacement = "CA")
+  )
+```

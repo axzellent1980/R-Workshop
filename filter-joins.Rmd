@@ -1,0 +1,95 @@
+---
+title: "Worshop, Part 8 - Filters & Joins"
+author: "Axel Waldecker"
+date: "6 August 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+library(here)
+library(kableExtra)
+```
+
+Reading in the `fish.csv` dataset.
+```{r echo=T, message=FALSE}
+fish <- read_csv(here("data","fish.csv"))
+kelp_abur <- read_excel(here("data","kelp.xlsx"), sheet = "abur")
+```
+
+Filtering data of interest from the overall data.
+```{r}
+fish_mohk <- fish %>% 
+  filter(site == "mohk")
+
+head(fish_mohk)
+```
+
+Multi-condition querying: let's create a subset of all observations from **2016** *OR* where the species is **garibaldi**.
+```{r}
+fish_gar_2016 <- fish %>% 
+  filter(year == 2016 | common_name == "garibaldi")
+
+glimpse(fish_gar_2016)
+```
+
+Next, create a subset from the `fish` data frame, called `low_gb_wr` that only contains:
+
+* *garibaldi* or *wrasse* observations **AND**
+* *total_count* of 10 or less
+
+```{r}
+low_gb_wr <- fish %>% 
+  filter(
+    common_name %in% c("garibaldi", "rock wrasse") ,
+    total_count <= 10
+  )
+
+head(low_gb_wr)
+```
+
+Create a new object called fish_it, starting from fish, that only contains observations if the common_name variable contains the string pattern “it”. What species remain?
+```{r}
+fish_it <- fish %>% 
+  filter(str_detect(common_name, pattern = "it"))
+
+unique(fish_it$common_name)
+
+```
+
+## Joining data together
+Full join = safest otion, nothing is left out
+```{r}
+abur_fish_full <- kelp_abur %>% 
+  full_join(fish, by = c("year", "site"))
+
+View(abur_fish_full)
+```
+
+Left join = everything from original (=left) dataframe, plus any matches from the other one.
+```{r}
+abur_fish_left <- kelp_abur %>% 
+  left_join(fish, by = c("year", "site"))
+
+head(abur_fish_left)
+```
+
+Filtering, then joining in a sequence.
+```{r}
+my_fish_join <- fish %>% 
+  filter(
+    year == 2017, site == "abur" # only including observations for 2017 at 'abur'
+  ) %>% 
+  left_join(kelp_abur, by = c("year","site")) %>% 
+  mutate(fish_per_frond = total_count / total_fronds)
+
+head(my_fish_join)
+
+kable(my_fish_join) %>% 
+  kable_styling(
+    bootstrap_options = c("striped", "condensed"),
+    full_width = TRUE
+  )
+```
